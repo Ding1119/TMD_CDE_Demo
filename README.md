@@ -2,7 +2,7 @@
 
 **AI-assisted, human-in-the-loop development of Common Data Elements (CDEs) for temporomandibular disorder (TMD) research, designed to work before any TMD EHR data are available.**
 
-[繁體中文說明 (README.zh-TW.md)](README.zh-TW.md)
+
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
