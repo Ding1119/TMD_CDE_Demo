@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block content %}
+<p><a href="/sources">&larr; Knowledge sources</a></p>
+<h1>{{ doc.title }}</h1>
+<p class="sub">{{ doc.source.name }} &middot; {{ doc.doc_type|replace('_',' ') }} &middot; relevance {{ '%.2f'|format(doc.relevance) }} &middot; {{ badge(doc.status) }}
+  {% if doc.uri %}&middot; <a href="{{ doc.uri }}" target="_blank" rel="noopener">source link</a>{% endif %}</p>
+<div class="grid g2">
+  <div class="card"><h2>Content</h2><pre class="code">{{ pretty }}</pre></div>
+  <div class="card"><h2>Candidates extracted ({{ doc.candidates|length }})</h2>
+    <table class="tbl"><tr><th>Name</th><th>Method</th><th>Status</th><th>CDE</th></tr>
+      {% for c in doc.candidates %}<tr><td>{{ c.name }}</td><td>{{ c.method }}</td><td>{{ badge(c.status) }}</td>
+        <td>{% if c.cde_id %}<a href="/cdes/{{ c.cde_id }}">open</a>{% endif %}</td></tr>{% endfor %}
+    </table>
+    {% if doc.meta %}<h3>Metadata</h3><pre class="code">{{ doc.meta|tojson_pretty }}</pre>{% endif %}
+  </div>
+</div>
+{% endblock %}

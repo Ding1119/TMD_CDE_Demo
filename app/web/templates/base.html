@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TMD CDE Platform{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+{% set path = request.url.path %}
+<header class="top">
+  <div class="wrap">
+    <div class="brand">TMD CDE Platform<small>{{ settings.org_name }} &middot; AI-assisted CDE development</small></div>
+    <nav class="main">
+      <a href="/" class="{{ 'on' if path == '/' }}">Dashboard</a>
+      <a href="/sources" class="{{ 'on' if path.startswith('/sources') }}">Knowledge Sources</a>
+      <a href="/pipeline" class="{{ 'on' if path.startswith('/pipeline') or path.startswith('/runs') }}">Agent Pipeline</a>
+      <a href="/candidates" class="{{ 'on' if path.startswith('/candidates') }}">Candidates</a>
+      <a href="/cdes" class="{{ 'on' if path.startswith('/cdes') }}">CDE Repository</a>
+      <a href="/review" class="{{ 'on' if path.startswith('/review') }}">Expert Review</a>
+      <a href="/phenotype" class="{{ 'on' if path.startswith('/phenotype') }}">EHR Readiness</a>
+      <a href="/exports" class="{{ 'on' if path.startswith('/export') }}">Exports</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  {% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
+  {% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

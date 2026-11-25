@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, sev %}
+{% block title %}{{ c.cde_code }} {{ c.name }}{% endblock %}
+{% block content %}
+<p><a href="/cdes">&larr; CDE repository</a></p>
+<div style="display:flex; justify-content:space-between; gap:16px; align-items:start; flex-wrap:wrap">
+  <div>
+    <h1>{{ c.name }}</h1>
+    <p class="sub"><span class="mono">{{ c.cde_code }}</span> &middot; <span class="mono">{{ c.variable_name }}</span> &middot; v{{ c.version }}
+      &middot; {{ badge(c.tier) }} {{ badge(c.status) }} &middot; QA score {{ '%.2f'|format(c.qa_score or 0) }}</p>
+  </div>
+  <form method="post" action="/cdes/{{ c.id }}/status" class="filters">
+    <div><label>Reviewer</label><input type="text" name="author" placeholder="your name"></div>
+    <div><label>Set status</label><select name="status">{% for s in CDE_STATUSES %}<option {{ 'selected' if s == c.status }}>{{ s }}</option>{% endfor %}</select></div>
+    <div><button class="btn">Update</button></div>
+  </form>
+</div>
+
+<div class="grid g2">
+  <div>
+    <div class="card">
+      <div class="layer-tag">Definition layer &middot; no EHR needed</div>
+      <h2>Definition</h2>
+      <dl class="kv">
+        <dt>Definition</dt><dd>{{ c.definition or '—' }}</dd>
+        <dt>Question text</dt><dd>{{ c.question_text or '—' }}</dd>
+        <dt>Data type</dt><dd>{{ c.data_type }}{% if c.unit %} &middot; unit {{ c.unit }}{% endif %}
+          {% if c.min_value is not none or c.max_value is not none %} &middot; range {{ c.min_value|num }}&ndash;{{ c.max_value|num }}{% endif %}</dd>
+        <dt>Instrument</dt><dd>{{ c.instrument or '—' }}</dd>
+        <dt>Recall period</dt><dd>{{ c.recall_period or '—' }}</dd>
+        <dt>Domain</dt><dd>{{ c.domain }}</dd>
+        <dt>Collected via</dt><dd>{{ EXPECTED_SOURCES.get(c.expected_source, '—') }}</dd>
+        <dt>In routine EHR</dt><dd>{{ EHR_CAPTURABILITY.get(c.ehr_capturability, '—') }}</dd>
+        {% if c.copyright_note %}<dt>Licensing</dt><dd>{{ c.copyright_note }}</dd>{% endif %}
+        {% if c.notes %}<dt>Notes</dt><dd>{{ c.notes }}</dd>{% endif %}
+      </dl>
+      {% if c.permissible_values %}
+      <h3>Permissible values</h3>
+      <table class="tbl"><tr><th>Code</th><th>Label</th><th>Value-level concept</th></tr>
+        {% for p in c.permissible_values %}<tr><td class="mono">{{ p.code }}</td><td>{{ p.label }}</td>
+          <td class="mono small">{% if p.concept_code %}{{ p.concept_system }}:{{ p.concept_code }}{% endif %}</td></tr>{% endfor %}
+      </table>{% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Terminology mappings</h2>
+      <table class="tbl"><tr><th>Code</th><th>Display</th><th>Relation</th><th>Status</th><th></th></tr>
+        {% for m in c.mappings %}
+        <tr><td class="mono nowrap">{{ m.system }}<br>{{ m.code or '—' }}</td>
+          <td class="small">{{ m.display }}{% if m.note %}<div class="muted">{{ m.note }}</div>{% endif %}</td>
+          <td class="small">{% if m.relation == 'gap' %}<span class="badge b-gap">gap</span>{% else %}{{ m.relation }}{% endif %}
+            <div class="muted">{{ m.method }}{% if m.confidence %} &middot; {{ '%.2f'|format(m.confidence) }}{% endif %}</div></td>
+          <td>{{ badge(m.status) }}</td>
+          <td class="nowrap">{% if m.relation != 'gap' %}
+            <form class="inline" method="post" action="/mappings/{{ m.id }}/accept"><button class="btn small" title="Accept mapping">&#10003;</button></form>
+            <form class="inline" method="post" action="/mappings/{{ m.id }}/reject"><button class="btn small secondary" title="Reject mapping">&#10005;</button></form>{% endif %}</td></tr>
+        {% else %}<tr><td colspan="5" class="muted">No mappings</td></tr>{% endfor %}
+      </table>
+      <details class="interactive" style="margin-top:10px"><summary>Add a mapping manually</summary>
+        <form method="post" action="/cdes/{{ c.id }}/mappings" class="filters" style="margin-top:8px">
+          <div><label>System</label><select name="system">{% for s in ['LOINC','SNOMEDCT','ICD10CM','HPO','NCIT','CDT','CPT','ATC','RxNorm','Local'] %}<option>{{ s }}</option>{% endfor %}</select></div>
+          <div><label>Code</label><input type="text" name="code" required></div>
+          <div style="flex:1"><label>Display</label><input type="text" name="display"></div>
+          <div><label>Relation</label><select name="relation">{% for r in ['exact','broad','narrow','related'] %}<option>{{ r }}</option>{% endfor %}</select></div>
+          <div><button class="btn">Add</button></div>
+        </form></details>
+    </div>
+
+    <div class="card">
+      <h2>Provenance ({{ c.provenance|length }})</h2>
+      <table class="tbl"><tr><th>Source</th><th>Citation</th><th></th></tr>
+        {% for p in c.provenance %}<tr><td class="mono">{{ p.source_key }}</td><td class="small">{{ p.citation }}</td>
+          <td class="nowrap">{% if p.document_id %}<a href="/sources/documents/{{ p.document_id }}">document</a>{% endif %}
+            {% if p.uri %} &middot; <a href="{{ p.uri }}" target="_blank" rel="noopener">link</a>{% endif %}</td></tr>{% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="layer-tag">Implementation layer &middot; EHR binding</div>
+      <h2>EHR readiness {{ badge(c.ehr_validation_status) }}</h2>
+      <table class="tbl"><tr><th>Target</th><th>Table.field</th><th>Binding</th><th></th></tr>
+        {% for i in c.implementations %}
+        <tr><td><b>{{ i.target }}</b><div>{{ badge(i.status) }}</div></td><td class="mono small wrap-any">{{ i.table_name }}.{{ i.field_name }}</td>
+          <td class="small">{% if i.value_set %}<details><summary>{{ i.value_set|length }} codes</summary>
+              <div class="mono">{% for v in i.value_set[:60] %}{{ v.system }}:{{ v.code }}{{ ', ' if not loop.last }}{% endfor %}{% if i.value_set|length > 60 %} &hellip;{% endif %}</div></details>{% endif %}
+            {% if i.nlp_terms %}<details><summary>{{ i.nlp_terms|length }} NLP terms</summary><div class="mono">{{ i.nlp_terms|join(' · ') }}</div></details>{% endif %}
+            <div class="muted">{{ i.logic }}</div></td>
+          <td>{% if i.status != 'validated' and i.target != 'REDCap' %}<form class="inline" method="post" action="/implementations/{{ i.id }}/validate"><button class="btn small secondary">Mark validated</button></form>{% endif %}</td></tr>
+        {% else %}<tr><td colspan="4" class="muted">No bindings yet (run the EHR-readiness agent).</td></tr>{% endfor %}
+      </table>
+      <p class="small muted">Bindings are drafts until checked against real data (chart review / data profiling) once the TMD EHR extract is available.</p>
+    </div>
+
+    <div class="card">
+      <h2>Quality assurance</h2>
+      <table class="tbl">{% for q in open_issues %}
+        <tr><td>{{ sev(q.severity) }}</td><td class="small">{{ q.message }}<div class="mono muted">{{ q.rule }}</div></td>
+          <td><form class="inline" method="post" action="/qa/{{ q.id }}/resolve"><button class="btn small secondary">Resolve</button></form></td></tr>
+        {% else %}<tr><td class="muted">No open issues.</td></tr>{% endfor %}</table>
+    </div>
+
+    <div class="card">
+      <h2>Expert review (Delphi)</h2>
+      <p class="small">Round {{ delphi.round or '—' }}: {{ delphi.n }} ratings &middot; importance median {{ delphi.imp_median or '—' }}
+        ({{ (delphi.imp_high * 100)|round|int }}% rated 7&ndash;9) &middot; feasibility median {{ delphi.feas_median or '—' }}
+        ({{ (delphi.feas_high * 100)|round|int }}% rated 7&ndash;9) &middot; decision {{ badge(delphi.decision) }}</p>
+      <form method="post" action="/cdes/{{ c.id }}/review">
+        <div class="grid g2">
+          <div><label>Reviewer</label><input type="text" name="reviewer" required></div>
+          <div><label>Role</label><input type="text" name="role" placeholder="e.g. orofacial pain dentist"></div>
+          <div><label>Importance for TMD research (1&ndash;9)</label><input type="number" name="importance" min="1" max="9" required></div>
+          <div><label>Feasibility to capture in routine care / EHR (1&ndash;9)</label><input type="number" name="feasibility" min="1" max="9" required></div>
+        </div>
+        <label>Round</label><input type="number" name="round" value="{{ next_round }}" min="1">
+        <label>Comment</label><textarea name="comment"></textarea>
+        <p><button class="btn">Submit rating</button></p>
+      </form>
+      {% if c.reviews %}<table class="tbl"><tr><th>Round</th><th>Reviewer</th><th class="num">Imp.</th><th class="num">Feas.</th><th>Comment</th></tr>
+        {% for r in c.reviews|sort(attribute='id', reverse=true) %}<tr><td>{{ r.round }}</td><td>{{ r.reviewer }}<div class="muted small">{{ r.role or '' }}</div></td>
+          <td class="num">{{ r.importance }}</td><td class="num">{{ r.feasibility }}</td><td class="small">{{ r.comment or '' }}</td></tr>{% endfor %}</table>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card interactive">
+  <details {{ 'open' if c.status == 'draft' and open_issues|selectattr('severity','equalto','error')|list }}>
+    <summary>Edit definition layer {% if c.status == 'approved' %}<span class="muted">(locked while approved)</span>{% endif %}</summary>
+    <form method="post" action="/cdes/{{ c.id }}/edit">
+      <div class="grid g2">
+        <div><label>Name</label><input type="text" name="name" value="{{ c.name }}" required></div>
+        <div><label>Instrument</label><input type="text" name="instrument" value="{{ c.instrument or '' }}"></div>
+      </div>
+      <label>Definition</label><textarea name="definition">{{ c.definition or '' }}</textarea>
+      <label>Question text</label><textarea name="question_text">{{ c.question_text or '' }}</textarea>
+      <div class="grid g3">
+        <div><label>Data type</label><select name="data_type">{% for t in DATA_TYPES %}<option {{ 'selected' if t == c.data_type }}>{{ t }}</option>{% endfor %}</select></div>
+        <div><label>Unit</label><input type="text" name="unit" value="{{ c.unit or '' }}"></div>
+        <div><label>Recall period</label><input type="text" name="recall_period" value="{{ c.recall_period or '' }}"></div>
+        <div><label>Min</label><input type="text" name="min_value" value="{{ c.min_value|num }}"></div>
+        <div><label>Max</label><input type="text" name="max_value" value="{{ c.max_value|num }}"></div>
+        <div><label>Tier</label><select name="tier">{% for t in TIERS %}<option {{ 'selected' if t == c.tier }}>{{ t }}</option>{% endfor %}</select></div>
+        <div><label>Domain</label><select name="domain">{% for d in DOMAINS %}<option {{ 'selected' if d == c.domain }}>{{ d }}</option>{% endfor %}</select></div>
+        <div><label>Collected via</label><select name="expected_source">{% for k, v in EXPECTED_SOURCES.items() %}<option value="{{ k }}" {{ 'selected' if k == c.expected_source }}>{{ v }}</option>{% endfor %}</select></div>
+        <div><label>In routine EHR</label><select name="ehr_capturability">{% for k, v in EHR_CAPTURABILITY.items() %}<option value="{{ k }}" {{ 'selected' if k == c.ehr_capturability }}>{{ v }}</option>{% endfor %}</select></div>
+      </div>
+      <label>Permissible values (one per line, <span class="mono">code=label</span>)</label><textarea name="pvs" class="mono">{{ pv_text }}</textarea>
+      <label>Licensing / copyright note</label><input type="text" name="copyright_note" value="{{ c.copyright_note or '' }}">
+      <label>Notes</label><textarea name="notes">{{ c.notes or '' }}</textarea>
+      <div class="grid g2"><div><label>Change note</label><input type="text" name="change_note" placeholder="why this change"></div>
+        <div><label>Your name</label><input type="text" name="author"></div></div>
+      <p><button class="btn" {{ 'disabled' if c.status == 'approved' }}>Save new version</button></p>
+    </form>
+  </details>
+</div>
+
+<div class="card">
+  <h2>Version history</h2>
+  <table class="tbl"><tr><th>Version</th><th>When</th><th>Author</th><th>Change</th><th></th></tr>
+    {% for v in c.versions|reverse %}<tr><td class="mono">{{ v.version }}</td><td class="nowrap small">{{ v.created_at|dt }}</td><td>{{ v.author }}</td><td class="small">{{ v.change_note }}</td>
+      <td><details><summary class="small">snapshot</summary><pre class="code">{{ v.snapshot|tojson_pretty }}</pre></details></td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

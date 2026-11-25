@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block head %}{% if run.status in ['queued', 'running'] %}<meta http-equiv="refresh" content="2">{% endif %}{% endblock %}
+{% block content %}
+<p><a href="/pipeline">&larr; Agent pipeline</a></p>
+<h1>Run #{{ run.id }} {{ badge(run.status) }}</h1>
+<p class="sub">Started {{ run.started_at|dt }}{% if run.finished_at %} &middot; finished {{ run.finished_at|dt }}{% endif %}
+  {% if run.status in ['queued', 'running'] %} &middot; refreshing&hellip;{% endif %}</p>
+<div class="card">
+  <h2>Agent log</h2>
+  <table class="tbl"><tr><th>Time</th><th>Agent</th><th>Message</th></tr>
+    {% for l in run.logs %}<tr class="log-{{ l.level }}"><td class="nowrap small">{{ l.created_at|dt }}</td><td class="mono">{{ l.agent }}</td><td>{{ l.message }}</td></tr>{% endfor %}
+  </table>
+</div>
+<div class="grid g2">
+  <div class="card"><h2>Summary</h2><pre class="code">{{ run.summary|tojson_pretty }}</pre></div>
+  <div class="card"><h2>Options</h2><pre class="code">{{ run.config|tojson_pretty }}</pre>
+    {% if run.status == 'needs_review' %}<p class="interactive"><a class="btn" href="/cdes">Review CDEs with QA errors</a></p>{% endif %}</div>
+</div>
+{% endblock %}

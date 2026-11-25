@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import bars, badge %}
+{% block content %}
+<h1>TMD Common Data Element Framework</h1>
+<p class="sub">Knowledge sources &rarr; agentic pipeline &rarr; two-layer CDE repository (definition now, EHR implementation later) &rarr; expert consensus.
+  {% if not settings.ehr_available %}<b>Mode: no TMD EHR yet</b> &mdash; EHR dictionaries are used as binding targets only.{% endif %}
+  LLM agents: <b>{{ 'on' if llm_on else 'off (rule-based)' }}</b> &middot; Online sources: <b>{{ 'on' if settings.online else 'off' }}</b>.</p>
+
+<div class="tiles">
+  <div class="tile"><div class="v">{{ report.n_cdes }}</div><div class="l">CDEs in repository</div></div>
+  <div class="tile"><div class="v">{{ report.by_tier.get('core', 0) }}</div><div class="l">Core CDEs</div></div>
+  <div class="tile"><div class="v">{{ report.terminology_coverage_pct }}%</div><div class="l">Mapped to a standard terminology</div></div>
+  <div class="tile"><div class="v">{{ report.ehr_binding_coverage_pct }}%</div><div class="l">With an EHR binding (OMOP or NLP)</div></div>
+  <div class="tile"><div class="v">{{ report.mean_qa_score }}</div><div class="l">Mean QA score (0&ndash;1)</div></div>
+  <div class="tile"><div class="v">{{ report.open_qa_issues.get('error', 0) }}</div><div class="l">Open QA errors</div></div>
+</div>
+
+{% if report.n_cdes == 0 %}
+<div class="card"><h2>Get started</h2>
+  <p>No CDEs yet. Run the agent pipeline once: it loads the bundled NIH HEAL / DC/TMD seed sources, extracts candidates,
+  maps terminology, harmonizes, drafts EHR bindings and runs QA.</p>
+  <form method="post" action="/pipeline/run"><input type="hidden" name="use_llm" value="on"><input type="hidden" name="online" value="on">
+  <button class="btn">Run pipeline now</button></form></div>
+{% endif %}
+
+<div class="grid g2">
+  <div class="card"><h2>CDEs by domain</h2>
+    {% set items = [] %}{% for d in DOMAINS %}{% if report.by_domain.get(d) %}{% set _ = items.append((d, report.by_domain[d])) %}{% endif %}{% endfor %}
+    {{ bars(items, report.n_cdes) }}
+    <p class="small muted">First five domains form the core set; the rest are domain-specific modules (framework slide 3).</p>
+  </div>
+  <div class="card"><h2>Where each CDE can be found in routine EHR data</h2>
+    {% set items2 = [] %}{% for k, lab in EHR_CAPTURABILITY.items() %}{% set _ = items2.append((lab, report.by_ehr_capturability.get(k, 0))) %}{% endfor %}
+    {{ bars(items2, report.n_cdes) }}
+    <h3>Expected collection source</h3>
+    {% set items3 = [] %}{% for k, lab in EXPECTED_SOURCES.items() %}{% if report.by_expected_source.get(k) %}{% set _ = items3.append((lab, report.by_expected_source[k])) %}{% endif %}{% endfor %}
+    {{ bars(items3, report.n_cdes) }}
+  </div>
+</div>
+
+<div class="grid g3">
+  <div class="card"><h2>Review status</h2>
+    {% set s_items = [] %}{% for s in CDE_STATUSES %}{% set _ = s_items.append((s|replace('_',' '), report.by_status.get(s, 0))) %}{% endfor %}
+    {{ bars(s_items, report.n_cdes) }}
+    <h3>Delphi decisions (latest round)</h3>
+    {% set d_items = [] %}{% for k, v in report.delphi_decisions.items() %}{% set _ = d_items.append((k|replace('_',' '), v)) %}{% endfor %}
+    {{ bars(d_items, report.n_cdes) }}
+  </div>
+  <div class="card"><h2>Pipeline inputs</h2>
+    <dl class="kv">
+      <dt>Knowledge sources</dt><dd>{{ counts.sources }}</dd>
+      <dt>Source documents</dt><dd>{{ counts.documents }}</dd>
+      <dt>Extracted candidates</dt><dd>{{ counts.candidates }}</dd>
+      <dt>Expert ratings</dt><dd>{{ counts.reviews }}</dd>
+      <dt>Multi-source CDEs</dt><dd>{{ report.multi_source_pct }}%</dd>
+    </dl>
+    <p class="small muted">Multi-source = supported by more than one knowledge source (e.g. HEAL and DC/TMD, or a study dictionary).</p>
+  </div>
+  <div class="card"><h2>Recent runs</h2>
+    <table class="tbl"><tr><th>#</th><th>Started</th><th>Status</th></tr>
+    {% for r in runs %}<tr><td><a href="/runs/{{ r.id }}">{{ r.id }}</a></td><td>{{ r.started_at|dt }}</td><td>{{ badge(r.status) }}</td></tr>
+    {% else %}<tr><td colspan="3" class="muted">No runs yet</td></tr>{% endfor %}</table>
+    <p><a class="btn small" href="/pipeline">Open agent pipeline</a></p>
+  </div>
+</div>
+{% endblock %}

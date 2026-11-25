@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block content %}
+<h1>EHR Readiness</h1>
+<p class="sub">Prepared before EHR access, so that when the TMD EHR extract is approved the cohort, concept sets and NLP lexicons can run
+  immediately. Everything here is a draft until validated by chart review.</p>
+{% for p in phenotypes %}
+<div class="card">
+  <h2>{{ p.name }} {{ badge(p.status) }} <span class="mono muted">v{{ p.version }}</span></h2>
+  <p>{{ p.description }}</p>
+  <div class="grid g2">
+    <div>
+      <h3>Index event</h3><p>{{ p.definition.index_event }}</p>
+      <h3>Inclusion</h3><ul>{% for r in p.definition.inclusion %}<li>{{ r.rule }} <span class="mono muted">[{{ r.value_set }}]</span></li>{% endfor %}</ul>
+      <h3>Supporting evidence</h3><ul>{% for r in p.definition.supporting_evidence %}<li>{{ r.rule }}</li>{% endfor %}</ul>
+      <h3>Exclusion</h3><ul>{% for r in p.definition.exclusion %}<li>{{ r.rule }} <span class="mono muted">{{ r.codes|join(', ') }}</span></li>{% endfor %}</ul>
+      <h3>Coding-history notes</h3><ul>{% for n in p.definition.temporal_notes %}<li>{{ n }}</li>{% endfor %}</ul>
+      <h3>Validation plan</h3><p>{{ p.definition.validation_plan }}</p>
+    </div>
+    <div>
+      <h3>TMD ICD-10-CM value set ({{ p.definition.value_sets.TMD_ICD10CM|length }} codes)</h3>
+      <table class="tbl"><tr><th>Code</th><th>Description</th></tr>
+        {% for v in p.definition.value_sets.TMD_ICD10CM %}<tr><td class="mono">{{ v.code }}</td><td class="small">{{ v.display }}</td></tr>{% endfor %}</table>
+      <h3>NLP lexicon</h3>
+      <table class="tbl"><tr><th>Concept</th><th>Terms</th></tr>
+        {% for k, terms in p.definition.value_sets.TMD_NLP.items() %}<tr><td class="mono">{{ k }}</td><td class="small">{{ terms|join(' · ') }}</td></tr>{% endfor %}</table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card"><p class="muted">No phenotype yet &mdash; run the pipeline (Phenotype &amp; EHR-Readiness Agent).</p></div>
+{% endfor %}
+<div class="card"><h2>Downloads for the EHR phase</h2>
+  <ul>
+    <li><a href="/export/omop_concept_sets.csv">OMOP source-code concept sets (CSV)</a> + <a href="/export/omop_resolve.sql">SQL to resolve them to standard concepts</a></li>
+    <li><a href="/export/nlp_lexicon.json">NLP lexicon per CDE (JSON)</a></li>
+    <li><a href="/export/phenotype.json">Phenotype definition (JSON)</a></li>
+  </ul>
+</div>
+{% endblock %}

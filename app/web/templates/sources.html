@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block content %}
+<h1>Knowledge Sources</h1>
+<p class="sub">Left column of the agentic framework. Weights are the Source Discovery Agent's priors; with no TMD EHR yet,
+CDE repositories, instruments and study dictionaries outrank EHR dictionaries (used only as binding targets).</p>
+
+<div class="grid g2">
+  <div class="card interactive">
+    <h2>Add a source file</h2>
+    <form method="post" action="/sources/upload" enctype="multipart/form-data">
+      <label>File</label><input type="file" name="file" required>
+      <label>Knowledge source</label>
+      <select name="source_key">
+        {% for s in sources %}<option value="{{ s.key }}" {{ 'selected' if s.key == 'upload' }}>{{ s.name }}</option>{% endfor %}
+      </select>
+      <p class="small muted">Accepted: HEAL CDE / TMD IMPACT / NINDS-style spreadsheets (.xlsx, .csv), REDCap data dictionaries (.csv),
+        NIH CDE Repository exports (.json, .csv), dbGaP data dictionaries (.xml), i2b2 ontology metadata (.csv with c_fullname, c_basecode
+        &mdash; choose the EHR data-model source), protocol or methods text (.txt, .md, .pdf with pypdf).</p>
+      <button class="btn">Upload</button>
+    </form>
+  </div>
+  <div class="card interactive">
+    <h2>Fetch online sources</h2>
+    {% if settings.online %}
+    <form method="post" action="/sources/fetch">
+      <label>Source</label><select name="kind"><option value="pubmed">PubMed (NCBI E-utilities)</option><option value="nlm">NIH CDE Repository (best-effort live search)</option></select>
+      <label>Query</label><input type="text" name="query" value="{{ default_query }}">
+      <label>Max results</label><input type="number" name="max_results" value="20" min="1" max="200">
+      <p><button class="btn">Fetch</button></p>
+    </form>
+    {% else %}
+    <p class="muted">Online mode is off. Start the server with <span class="mono">TMD_CDE_ONLINE=1</span> to pull PubMed abstracts and
+      NIH CDE Repository results, and to let the Terminology Mapping Agent query NLM Clinical Tables, EBI OLS and UMLS.</p>
+    <p class="small muted">Offline alternative: export search results from cde.nlm.nih.gov or download CDE files from the HEAL CDE
+      Repository, then upload them here.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Source registry</h2>
+  <table class="tbl">
+    <tr><th>Key</th><th>Source</th><th>Kind</th><th class="num">Weight</th><th class="num">Documents</th><th>Link</th></tr>
+    {% for s in sources %}
+    <tr><td class="mono">{{ s.key }}</td><td><b>{{ s.name }}</b><div class="small muted">{{ s.description }}</div></td>
+      <td>{{ s.kind|replace('_',' ') }}</td><td class="num">{{ s.weight }}</td><td class="num">{{ s.documents|length }}</td>
+      <td>{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener">open</a>{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Documents ({{ docs|length }})</h2>
+  <table class="tbl">
+    <tr><th>Title</th><th>Source</th><th>Type</th><th class="num">Relevance</th><th>Status</th><th class="num">Candidates</th></tr>
+    {% for d in docs %}
+    <tr><td><a href="/sources/documents/{{ d.id }}">{{ d.title }}</a></td><td class="mono">{{ d.source.key }}</td>
+      <td>{{ d.doc_type|replace('_',' ') }}</td><td class="num">{{ '%.2f'|format(d.relevance) }}</td>
+      <td>{{ badge(d.status) }}</td><td class="num">{{ d.candidates|length }}</td></tr>
+    {% else %}<tr><td colspan="6" class="muted">No documents yet &mdash; run the pipeline to load the seed sources.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

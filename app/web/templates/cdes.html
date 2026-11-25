@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block content %}
+<h1>CDE Repository</h1>
+<p class="sub">Core + extension CDEs with standard definitions, mappings, provenance and versions. A comprehensive repository &mdash;
+  not every study needs to collect every CDE.</p>
+<form class="filters" method="get">
+  <div style="flex:1"><label>Search</label><input type="text" name="q" value="{{ f.q }}" placeholder="name, definition, variable, instrument"></div>
+  <div><label>Domain</label><select name="domain"><option value="">All</option>{% for d in DOMAINS %}<option {{ 'selected' if f.domain == d }}>{{ d }}</option>{% endfor %}</select></div>
+  <div><label>Tier</label><select name="tier"><option value="">All</option>{% for t in TIERS %}<option {{ 'selected' if f.tier == t }}>{{ t }}</option>{% endfor %}</select></div>
+  <div><label>Status</label><select name="status"><option value="">All</option>{% for s in CDE_STATUSES %}<option {{ 'selected' if f.status == s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label>EHR capturability</label><select name="capt"><option value="">All</option>{% for k, v in EHR_CAPTURABILITY.items() %}<option value="{{ k }}" {{ 'selected' if f.capt == k }}>{{ v }}</option>{% endfor %}</select></div>
+  <div><button class="btn">Filter</button></div>
+</form>
+<div class="card">
+<p class="small muted mt0">{{ rows|length }} CDEs</p>
+<table class="tbl">
+  <tr><th>Code</th><th>Name / variable</th><th>Domain</th><th>Tier</th><th>Type</th><th>Collected via</th><th>In EHR</th>
+      <th class="num">Sources</th><th class="num">QA</th><th>Status</th><th>Ver.</th></tr>
+  {% for c in rows %}
+  {% set errs = c.qa_issues|selectattr('resolved', 'equalto', false)|selectattr('severity', 'equalto', 'error')|list %}
+  <tr><td class="mono nowrap"><a href="/cdes/{{ c.id }}">{{ c.cde_code }}</a></td>
+    <td><a href="/cdes/{{ c.id }}"><b>{{ c.name }}</b></a><div class="mono muted">{{ c.variable_name }}{% if c.instrument %} &middot; {{ c.instrument }}{% endif %}</div></td>
+    <td class="small">{{ c.domain }}</td><td>{{ badge(c.tier) }}</td><td class="small">{{ c.data_type }}</td>
+    <td class="small">{{ EXPECTED_SOURCES.get(c.expected_source, '—') }}</td>
+    <td class="small">{{ EHR_CAPTURABILITY.get(c.ehr_capturability, '—') }}</td>
+    <td class="num">{{ c.provenance|map(attribute='source_key')|unique|list|length }}</td>
+    <td class="num">{% if errs %}<span class="sev sev-error">&#10006; {{ errs|length }}</span>{% else %}{{ '%.2f'|format(c.qa_score or 0) }}{% endif %}</td>
+    <td>{{ badge(c.status) }}</td><td class="mono">{{ c.version }}</td></tr>
+  {% else %}<tr><td colspan="11" class="muted">No CDEs match. Run the pipeline or clear filters.</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}

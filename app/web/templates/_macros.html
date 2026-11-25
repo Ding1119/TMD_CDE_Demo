@@ -1,0 +1,23 @@
+{% macro badge(value, label=None) -%}
+<span class="badge b-{{ value }}">{{ (label or value or '—')|replace('_', ' ') }}</span>
+{%- endmacro %}
+
+{% macro sev(s) -%}
+{% if s == 'error' %}<span class="sev sev-error">&#10006; Error</span>
+{% elif s == 'warning' %}<span class="sev sev-warning">&#9650; Warning</span>
+{% else %}<span class="sev sev-info">&#9432; Note</span>{% endif %}
+{%- endmacro %}
+
+{# Horizontal single-series bar list: items = list of (label, value) #}
+{% macro bars(items, total=None, unit='') -%}
+{% set mx = (items|map(attribute=1)|max) if items else 1 %}
+<div class="bars">
+{% for label, value in items %}
+  <div class="bar-row" title="{{ label }}: {{ value }}{{ unit }}{% if total %} ({{ (100 * value / total)|round(0)|int }}% of {{ total }}){% endif %}">
+    <span class="lab">{{ label }}</span>
+    <span class="track">{% if value %}<span class="fill" style="display:block;width: {{ (100 * value / (mx or 1))|round(1) }}%"></span>{% endif %}</span>
+    <span class="val">{{ value }}{{ unit }}</span>
+  </div>
+{% endfor %}
+</div>
+{%- endmacro %}

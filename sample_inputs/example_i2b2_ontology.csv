@@ -1,0 +1,6 @@
+c_hlevel,c_fullname,c_name,c_basecode
+3,\i2b2\Diagnoses\ICD10\M00-M99\M26\M26.62\M26.621\,Arthralgia of right temporomandibular joint,ICD10CM:M26.621
+3,\i2b2\Diagnoses\ICD10\M00-M99\M26\M26.62\M26.622\,Arthralgia of left temporomandibular joint,ICD10CM:M26.622
+3,\i2b2\Diagnoses\ICD10\M00-M99\M79\M79.11\,Myalgia of mastication muscle,ICD10CM:M79.11
+3,\i2b2\Diagnoses\ICD10\G00-G99\G47\G47.63\,Sleep related bruxism,ICD10CM:G47.63
+3,\i2b2\Labs\LOINC\44261-6\,PHQ-9 total score,LOINC:44261-6

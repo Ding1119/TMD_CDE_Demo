@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block content %}
+<h1>Extracted Candidates</h1>
+<p class="sub">Raw output of the Extraction Agent. <b>Unmatched</b> candidates did not reach the confidence needed to become a CDE
+  on their own (e.g. low-confidence text mentions, or study-dictionary variables unrelated to TMD) &mdash; promote or reject them.</p>
+<div class="filters">
+  <a class="btn small {{ 'secondary' if status }}" href="/candidates">All</a>
+  {% for s, n in counts.items() %}<a class="btn small {{ 'secondary' if status != s }}" href="/candidates?status={{ s }}">{{ s }} ({{ n }})</a>{% endfor %}
+</div>
+<div class="card">
+<table class="tbl">
+  <tr><th>#</th><th>Name</th><th>Source document</th><th>Method</th><th class="num">Conf.</th><th>Domain</th><th>Status</th><th>CDE / action</th></tr>
+  {% for c in rows %}
+  <tr><td class="muted">{{ c.id }}</td>
+    <td><b>{{ c.name }}</b>{% if c.meta.evidence %}<div class="small muted">&ldquo;{{ c.meta.evidence[:160] }}&rdquo;</div>{% endif %}</td>
+    <td class="small"><a href="/sources/documents/{{ c.document_id }}">{{ c.document.title[:60] }}</a></td>
+    <td>{{ c.method }}</td><td class="num">{{ '%.2f'|format(c.confidence) }}</td><td class="small">{{ c.domain }}</td>
+    <td>{{ badge(c.status) }}</td>
+    <td class="nowrap">{% if c.cde_id %}<a href="/cdes/{{ c.cde_id }}">open CDE</a>
+      {% elif c.status in ['unmatched', 'new', 'mapped'] %}
+      <form class="inline" method="post" action="/candidates/{{ c.id }}/promote"><button class="btn small">Promote</button></form>
+      <form class="inline" method="post" action="/candidates/{{ c.id }}/reject"><button class="btn small secondary">Reject</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="8" class="muted">No candidates</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}

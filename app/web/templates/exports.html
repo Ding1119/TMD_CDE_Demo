@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Exports</h1>
+<p class="sub">Add <span class="mono">?status=approved</span> to any CDE export to release only approved elements.</p>
+<div class="grid g2">
+  <div class="card"><h2>CDE repository</h2>
+    <ul>
+      <li><a href="/export/cdes.json">Full repository, both layers (JSON)</a> &mdash; definitions, values, mappings, provenance, bindings, Delphi summary</li>
+      <li><a href="/export/cdes.csv">Definition layer, flat (CSV)</a></li>
+      <li><a href="/export/cdes.json?status=approved">Approved release only (JSON)</a></li>
+    </ul></div>
+  <div class="card"><h2>Prospective data collection</h2>
+    <ul>
+      <li><a href="/export/redcap_core.csv">REDCap data dictionary &mdash; core CDEs</a></li>
+      <li><a href="/export/redcap_all.csv">REDCap data dictionary &mdash; core + extension modules</a></li>
+    </ul>
+    <p class="small muted">Score-level fields only for licensed instruments; add item-level fields from the official HEAL / DC/TMD CRFs.</p></div>
+  <div class="card"><h2>EHR phase</h2>
+    <ul>
+      <li><a href="/export/omop_concept_sets.csv">OMOP concept sets (source codes)</a> &middot; <a href="/export/omop_resolve.sql">resolve SQL</a></li>
+      <li><a href="/export/nlp_lexicon.json">NLP lexicon</a></li>
+      <li><a href="/export/phenotype.json">TMD computable phenotype (draft)</a></li>
+    </ul></div>
+  <div class="card"><h2>Evaluation (Aim 3)</h2>
+    <ul><li><a href="/export/coverage_report.json">Coverage &amp; quality report (JSON)</a> &mdash; terminology coverage, EHR-binding coverage,
+      capturability mix, QA, Delphi decisions. Re-run after EHR data arrive to measure real coverage.</li></ul>
+    <p class="small muted interactive">JSON API and interactive docs: <a href="/docs">/docs</a></p></div>
+</div>
+{% endblock %}

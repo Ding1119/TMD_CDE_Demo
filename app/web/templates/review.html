@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block content %}
+<h1>Expert Review &amp; Consensus</h1>
+<p class="sub">Human-in-the-loop: multidisciplinary panel ratings on a 1&ndash;9 scale. Consensus to <b>include</b> when &ge;{{ (settings.delphi_threshold*100)|int }}%
+  of at least {{ settings.delphi_min_raters }} raters score importance 7&ndash;9; <b>exclude</b> when &ge;{{ (settings.delphi_threshold*100)|int }}% score 1&ndash;3.
+  Feasibility (can it be captured in routine care / EHR?) is reported alongside &mdash; it stands in for EHR evidence until EHR data exist.</p>
+<form class="filters" method="get">
+  <div><label>Round</label><select name="round"><option value="">Latest per CDE</option>{% for r in rounds %}<option {{ 'selected' if round == r }}>{{ r }}</option>{% endfor %}</select></div>
+  <div><label>Decision</label><select name="decision"><option value="">All</option>{% for d in ['include','exclude','no_consensus','insufficient_raters','not_rated'] %}<option value="{{ d }}" {{ 'selected' if decision == d }}>{{ d|replace('_',' ') }}</option>{% endfor %}</select></div>
+  <div><button class="btn">Filter</button></div>
+</form>
+<div class="card">
+<table class="tbl">
+  <tr><th>Code</th><th>CDE</th><th>Tier</th><th class="num">Round</th><th class="num">Raters</th><th class="num">Importance median</th><th class="num">% 7&ndash;9</th>
+      <th class="num">Feasibility median</th><th class="num">% 7&ndash;9</th><th>Decision</th><th>Status</th></tr>
+  {% for c, s in rows %}
+  <tr><td class="mono nowrap"><a href="/cdes/{{ c.id }}">{{ c.cde_code }}</a></td><td>{{ c.name }}</td><td>{{ badge(c.tier) }}</td>
+    <td class="num">{{ s.round or '—' }}</td><td class="num">{{ s.n }}</td><td class="num">{{ s.imp_median if s.imp_median is not none else '—' }}</td>
+    <td class="num">{{ (s.imp_high*100)|round|int }}%</td><td class="num">{{ s.feas_median if s.feas_median is not none else '—' }}</td>
+    <td class="num">{{ (s.feas_high*100)|round|int }}%</td><td>{{ badge(s.decision) }}</td><td>{{ badge(c.status) }}</td></tr>
+  {% else %}<tr><td colspan="11" class="muted">Nothing to show.</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}

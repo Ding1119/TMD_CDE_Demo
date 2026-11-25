@@ -1,0 +1,9 @@
+Variable / Field Name,Form Name,Section Header,Field Type,Field Label,"Choices, Calculations, OR Slider Labels",Field Note,Text Validation Type OR Show Slider Number,Text Validation Min,Text Validation Max,Identifier?,Branching Logic (Show field only if...),Required Field?,Custom Alignment,Question Number (surveys only),Matrix Group Name,Matrix Ranking?,Field Annotation
+record_id,baseline,,text,Record ID,,,,,,,,,,,,,
+exam_muo,baseline,Jaw exam,text,Maximum unassisted opening (mm),,mm,integer,0,90,,,,,,,,
+exam_painfree_open,baseline,,text,Pain-free opening (mm),,mm,integer,0,90,,,,,,,,
+jaw_click_30d,baseline,,yesno,Jaw joint noise in last 30 days,,,,,,,,,,,,,
+night_guard,baseline,,yesno,Currently using a night guard or occlusal splint,,,,,,,,,,,,,
+gcps_cpi,baseline,Questionnaires,text,GCPS characteristic pain intensity,,,integer,0,100,,,,,,,,
+favorite_color,baseline,,radio,Favorite color,"1, Red | 2, Blue",,,,,,,,,,,,
+baseline_complete,baseline,,radio,Complete?,"0, Incomplete | 1, Unverified | 2, Complete",,,,,,,,,,,,

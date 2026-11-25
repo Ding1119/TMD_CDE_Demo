@@ -1,0 +1,17 @@
+SYNTHETIC EXAMPLE - not from a real study. Use it to try the text-extraction path.
+
+Title: Prospective cohort of adults with painful temporomandibular disorders (example protocol, methods section)
+
+Participants are screened with the TMD Pain Screener and examined by calibrated dentists following the DC/TMD
+clinical examination protocol. Pain-free opening and maximum unassisted opening are measured in millimetres with a
+ruler. Joint sounds (clicking, crepitus) are recorded during opening and closing, and locking history is collected
+from the symptom questionnaire.
+
+Pain intensity and pain-related disability are assessed with the Graded Chronic Pain Scale (GCPS v2.0). Jaw function
+is measured with the JFLS-8 and the 20-item Jaw Functional Limitation Scale. Oral parafunction is assessed with the
+Oral Behaviors Checklist (OBC). Psychological status is captured with the PHQ-9, GAD-7 and PHQ-15.
+
+At a subset of visits, pressure pain thresholds are measured over the masseter and temporalis with an algometer.
+Treatment exposures recorded at follow-up include stabilization splint therapy, TMJ arthrocentesis and medications.
+Participants with suspected degenerative joint disease receive CBCT imaging. Comorbid fibromyalgia and irritable
+bowel syndrome are documented from the medical history.
